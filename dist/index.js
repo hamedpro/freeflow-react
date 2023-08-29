@@ -1,6 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useEffect, useMemo, useRef, useState, } from "react";
-import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, } from "freeflow-core/dist/utils";
+import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
@@ -18,6 +18,9 @@ var default_context_value = {
     profiles_seed: [],
     set_state: () => {
         throw "context value is still its default value. valid set_state is not set here yet.";
+    },
+    request_new_transaction: () => {
+        throw "context value is still its default value. valid request_new_transaction is not set here yet.";
     },
 };
 export const context = createContext(default_context_value);
@@ -41,7 +44,8 @@ export function FreeFlowReact({ children }) {
         unresolved_cache,
         cache,
         transactions,
-        set_state });
+        set_state,
+        request_new_transaction });
     var websocket = useRef();
     useEffect(() => {
         websocket.current = io(ws_endpoint);
@@ -70,7 +74,7 @@ export function FreeFlowReact({ children }) {
             throw `internal error! we were sure websocket_client is not undefined,
 			but if you see this we were wrong.`;
         }
-        websocket.current.emit("sync_profiles_seed", state.profiles_seed);
+        sync_profiles_seed(websocket.current, state.profiles_seed);
     }, [JSON.stringify(state.profiles_seed)]);
     return _jsx(context.Provider, { value: context_value, children: children });
 }
