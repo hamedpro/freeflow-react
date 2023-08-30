@@ -1,5 +1,5 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { createContext, useEffect, useMemo, useRef, useState, } from "react";
+import { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
 import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -47,7 +47,7 @@ export function FreeFlowReact({ children }) {
         set_state,
         request_new_transaction });
     var websocket = useRef();
-    useEffect(() => {
+    useLayoutEffect(() => {
         websocket.current = io(ws_endpoint);
         websocket.current.on("sync_profiles", (diff) => {
             set_state((prev) => {
@@ -59,15 +59,7 @@ export function FreeFlowReact({ children }) {
         websocket.current.on("sync_all_transactions", (new_transactions) => {
             set_state((prev) => (Object.assign(Object.assign({}, prev), { all_transactions: custom_find_unique(prev.all_transactions.concat(new_transactions), (tr1, tr2) => tr1.id === tr2.id) })));
         });
-        sync_cache(websocket.current, state.all_transactions).then(() => {
-            if (websocket.current === undefined) {
-                throw `internal error! we were sure websocket_client is not undefined,
-					but if you see this we were wrong.`;
-            }
-            sync_profiles_seed(websocket.current, state.profiles_seed);
-        }, (error) => {
-            "async funcrtion failed : sync_cache";
-        });
+        sync_cache(websocket.current, state.all_transactions);
     }, []);
     useEffect(() => {
         if (websocket.current === undefined) {
