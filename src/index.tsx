@@ -4,6 +4,7 @@ import {
 	SetStateAction,
 	createContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -89,11 +90,11 @@ export function FreeFlowReact({ children }: { children: ReactNode }) {
 		request_new_transaction,
 	};
 	var websocket = useRef<ReturnType<typeof io>>();
-	useEffect(() => {
+	useLayoutEffect(() => {
 		websocket.current = io(ws_endpoint);
 		websocket.current.on("sync_profiles", (diff: rdiff.rdiffResult[]) => {
 			set_state((prev) => {
-				var profiles_clone = [...state.profiles];
+				var profiles_clone = [...prev.profiles];
 				applyDiff(profiles_clone, diff);
 				return {
 					...prev,
@@ -110,18 +111,7 @@ export function FreeFlowReact({ children }: { children: ReactNode }) {
 				),
 			}));
 		});
-		sync_cache(websocket.current, state.all_transactions).then(
-			() => {
-				if (websocket.current === undefined) {
-					throw `internal error! we were sure websocket_client is not undefined,
-					but if you see this we were wrong.`;
-				}
-				sync_profiles_seed(websocket.current, state.profiles_seed);
-			},
-			(error) => {
-				"async funcrtion failed : sync_cache";
-			}
-		);
+		sync_cache(websocket.current, state.all_transactions);
 	}, []);
 	useEffect(() => {
 		if (websocket.current === undefined) {

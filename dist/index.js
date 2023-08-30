@@ -51,7 +51,7 @@ export function FreeFlowReact({ children }) {
         websocket.current = io(ws_endpoint);
         websocket.current.on("sync_profiles", (diff) => {
             set_state((prev) => {
-                var profiles_clone = [...state.profiles];
+                var profiles_clone = [...prev.profiles];
                 applyDiff(profiles_clone, diff);
                 return Object.assign(Object.assign({}, prev), { profiles: profiles_clone });
             });
