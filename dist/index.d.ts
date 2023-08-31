@@ -17,4 +17,4 @@ export type context_value = state_value & {
 export declare const context: import("react").Context<context_value>;
 export declare function FreeFlowReact({ children }: {
     children: ReactNode;
-}): JSX.Element;
+}): import("react/jsx-runtime").JSX.Element;
