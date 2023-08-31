@@ -19,6 +19,7 @@ import {
 	sync_profiles_seed,
 	user_discoverable_transactions,
 	request_new_transaction,
+	request_new_thing,
 } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -42,8 +43,11 @@ export type context_value = state_value & {
 	unresolved_cache: cache;
 	set_state: Dispatch<SetStateAction<state_value>>;
 	request_new_transaction: typeof request_new_transaction;
+	request_new_thing: typeof request_new_thing;
+	ws_endpoint: string;
+	ui_endpoint: string;
+	rest_endpoint: string;
 };
-
 var default_context_value: context_value = {
 	configured_axios: axios.create(),
 	transactions: [],
@@ -58,6 +62,12 @@ var default_context_value: context_value = {
 	request_new_transaction: () => {
 		throw "context value is still its default value. valid request_new_transaction is not set here yet.";
 	},
+	request_new_thing: () => {
+		throw "context value is still its default value. valid request_new_transaction is not set here yet.";
+	},
+	ws_endpoint,
+	rest_endpoint,
+	ui_endpoint,
 };
 
 export const context = createContext<context_value>(default_context_value);
@@ -88,6 +98,10 @@ export function FreeFlowReact({ children }: { children: ReactNode }) {
 		transactions,
 		set_state,
 		request_new_transaction,
+		request_new_thing,
+		ws_endpoint,
+		rest_endpoint,
+		ui_endpoint,
 	};
 	var websocket = useRef<ReturnType<typeof io>>();
 	useLayoutEffect(() => {

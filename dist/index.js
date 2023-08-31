@@ -1,6 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
-import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, } from "freeflow-core/dist/utils";
+import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, request_new_thing, } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
@@ -22,6 +22,12 @@ var default_context_value = {
     request_new_transaction: () => {
         throw "context value is still its default value. valid request_new_transaction is not set here yet.";
     },
+    request_new_thing: () => {
+        throw "context value is still its default value. valid request_new_transaction is not set here yet.";
+    },
+    ws_endpoint,
+    rest_endpoint,
+    ui_endpoint,
 };
 export const context = createContext(default_context_value);
 export function FreeFlowReact({ children }) {
@@ -45,7 +51,11 @@ export function FreeFlowReact({ children }) {
         cache,
         transactions,
         set_state,
-        request_new_transaction });
+        request_new_transaction,
+        request_new_thing,
+        ws_endpoint,
+        rest_endpoint,
+        ui_endpoint });
     var websocket = useRef();
     useLayoutEffect(() => {
         websocket.current = io(ws_endpoint);
