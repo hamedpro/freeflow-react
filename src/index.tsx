@@ -26,10 +26,6 @@ import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
 import { custom_find_unique } from "hamedpro-helpers";
 
-var ws_endpoint: string = "http://localhost:5002";
-var rest_endpoint: string = "http://localhost:5001";
-var ui_endpoint: string = "http://localhost:5000";
-
 export type state_value = {
 	all_transactions: transaction[];
 	profiles_seed: profile_seed[];
@@ -45,7 +41,6 @@ export type context_value = state_value & {
 	request_new_transaction: typeof request_new_transaction;
 	request_new_thing: typeof request_new_thing;
 	ws_endpoint: string;
-	ui_endpoint: string;
 	rest_endpoint: string;
 };
 var default_context_value: context_value = {
@@ -65,15 +60,22 @@ var default_context_value: context_value = {
 	request_new_thing: () => {
 		throw "context value is still its default value. valid request_new_transaction is not set here yet.";
 	},
-	ws_endpoint,
-	rest_endpoint,
-	ui_endpoint,
+	ws_endpoint: "http://localhost:5002",
+	rest_endpoint: "http://localhost:5001",
 };
 
 export const context = createContext<context_value>(default_context_value);
-export function FreeFlowReact({ children }: { children: ReactNode }) {
+export function FreeFlowReact({
+	children,
+	ws_endpoint,
+	rest_endpoint,
+}: {
+	children: ReactNode;
+	ws_endpoint: string;
+	rest_endpoint: string;
+}) {
 	var [state, set_state] = useState<state_value>(default_context_value);
-
+	//var toast_ref = useRef<Toast>(null);
 	var configured_axios = useMemo(() => {
 		return create_configured_axios({
 			restful_api_endpoint: rest_endpoint,
@@ -101,7 +103,6 @@ export function FreeFlowReact({ children }: { children: ReactNode }) {
 		request_new_thing,
 		ws_endpoint,
 		rest_endpoint,
-		ui_endpoint,
 	};
 	var websocket = useRef<ReturnType<typeof io>>();
 	useLayoutEffect(() => {
@@ -134,5 +135,10 @@ export function FreeFlowReact({ children }: { children: ReactNode }) {
 		}
 		sync_profiles_seed(websocket.current, state.profiles_seed);
 	}, [JSON.stringify(state.profiles_seed)]);
-	return <context.Provider value={context_value}>{children}</context.Provider>;
+	return (
+		<context.Provider value={context_value}>
+			{/* <Toast ref={toast_ref} /> */}
+			{children}
+		</context.Provider>
+	);
 }

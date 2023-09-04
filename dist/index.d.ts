@@ -15,10 +15,11 @@ export type context_value = state_value & {
     request_new_transaction: typeof request_new_transaction;
     request_new_thing: typeof request_new_thing;
     ws_endpoint: string;
-    ui_endpoint: string;
     rest_endpoint: string;
 };
 export declare const context: import("react").Context<context_value>;
-export declare function FreeFlowReact({ children }: {
+export declare function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }: {
     children: ReactNode;
+    ws_endpoint: string;
+    rest_endpoint: string;
 }): import("react/jsx-runtime").JSX.Element;

@@ -5,9 +5,6 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
 import { custom_find_unique } from "hamedpro-helpers";
-var ws_endpoint = "http://localhost:5002";
-var rest_endpoint = "http://localhost:5001";
-var ui_endpoint = "http://localhost:5000";
 var default_context_value = {
     configured_axios: axios.create(),
     transactions: [],
@@ -25,13 +22,13 @@ var default_context_value = {
     request_new_thing: () => {
         throw "context value is still its default value. valid request_new_transaction is not set here yet.";
     },
-    ws_endpoint,
-    rest_endpoint,
-    ui_endpoint,
+    ws_endpoint: "http://localhost:5002",
+    rest_endpoint: "http://localhost:5001",
 };
 export const context = createContext(default_context_value);
-export function FreeFlowReact({ children }) {
+export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
     var [state, set_state] = useState(default_context_value);
+    //var toast_ref = useRef<Toast>(null);
     var configured_axios = useMemo(() => {
         var _a;
         return create_configured_axios({
@@ -54,8 +51,7 @@ export function FreeFlowReact({ children }) {
         request_new_transaction,
         request_new_thing,
         ws_endpoint,
-        rest_endpoint,
-        ui_endpoint });
+        rest_endpoint });
     var websocket = useRef();
     useLayoutEffect(() => {
         websocket.current = io(ws_endpoint);
@@ -78,5 +74,5 @@ export function FreeFlowReact({ children }) {
         }
         sync_profiles_seed(websocket.current, state.profiles_seed);
     }, [JSON.stringify(state.profiles_seed)]);
-    return _jsx(context.Provider, { value: context_value, children: children });
+    return (_jsx(context.Provider, { value: context_value, children: children }));
 }
