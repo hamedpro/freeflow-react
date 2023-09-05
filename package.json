@@ -1,11 +1,10 @@
 {
     "type": "module",
     "name": "freeflow-react",
-    "version": "1.6.0",
     "dependencies": {
         "@types/react": "^18.2.21",
         "axios": "^1.5.0",
-        "freeflow-core": "latest",
+        "freeflow-core": "github:hamedpro/freeflow-core",
         "hamedpro-helpers": "^1.2.0",
         "primereact": "^9.6.2",
         "react": "^18.2.0",
