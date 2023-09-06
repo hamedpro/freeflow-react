@@ -1,6 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
-import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, request_new_thing, } from "freeflow-core/dist/utils";
+import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction, request_new_thing, calc_file_url as utils_calc_file_url, } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
@@ -24,6 +24,9 @@ var default_context_value = {
     },
     ws_endpoint: "http://localhost:5002",
     rest_endpoint: "http://localhost:5001",
+    calc_file_url: (file_id) => {
+        throw "this function has not initialized yet";
+    },
 };
 export const context = createContext(default_context_value);
 export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
@@ -35,6 +38,9 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
             restful_api_endpoint: rest_endpoint,
             jwt: (_a = find_active_profile_seed(state.profiles_seed)) === null || _a === void 0 ? void 0 : _a.jwt,
         });
+    }, [rest_endpoint, JSON.stringify(state.profiles_seed)]);
+    var calc_file_url = useMemo(() => {
+        return (file_id) => utils_calc_file_url(state.profiles_seed, rest_endpoint, file_id);
     }, [rest_endpoint, JSON.stringify(state.profiles_seed)]);
     var transactions = useMemo(() => user_discoverable_transactions(state.profiles, state.all_transactions), [JSON.stringify(state.profiles), JSON.stringify(state.all_transactions)]);
     var cache = useMemo(() => {
@@ -51,7 +57,8 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
         request_new_transaction,
         request_new_thing,
         ws_endpoint,
-        rest_endpoint });
+        rest_endpoint,
+        calc_file_url });
     var websocket = useRef();
     useLayoutEffect(() => {
         websocket.current = io(ws_endpoint);
@@ -73,6 +80,17 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
 			but if you see this we were wrong.`;
         }
         sync_profiles_seed(websocket.current, state.profiles_seed);
+    }, [JSON.stringify(state.profiles_seed)]);
+    useEffect(() => {
+        //localStorage load at first
+        if (window.localStorage.getItem("profiles_seed") === null) {
+            window.localStorage.setItem("profiles_seed", JSON.stringify([]));
+        }
+        var profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed"));
+        set_state((prev) => (Object.assign(Object.assign({}, prev), { profiles_seed })));
+    }, []);
+    useEffect(() => {
+        localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
     }, [JSON.stringify(state.profiles_seed)]);
     return (_jsx(context.Provider, { value: context_value, children: children }));
 }

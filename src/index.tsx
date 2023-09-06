@@ -20,6 +20,7 @@ import {
 	user_discoverable_transactions,
 	request_new_transaction,
 	request_new_thing,
+	calc_file_url as utils_calc_file_url,
 } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -42,6 +43,7 @@ export type context_value = state_value & {
 	request_new_thing: typeof request_new_thing;
 	ws_endpoint: string;
 	rest_endpoint: string;
+	calc_file_url: (file_id: number) => string;
 };
 var default_context_value: context_value = {
 	configured_axios: axios.create(),
@@ -62,8 +64,10 @@ var default_context_value: context_value = {
 	},
 	ws_endpoint: "http://localhost:5002",
 	rest_endpoint: "http://localhost:5001",
+	calc_file_url: (file_id: number) => {
+		throw "this function has not initialized yet";
+	},
 };
-
 export const context = createContext<context_value>(default_context_value);
 export function FreeFlowReact({
 	children,
@@ -81,6 +85,10 @@ export function FreeFlowReact({
 			restful_api_endpoint: rest_endpoint,
 			jwt: find_active_profile_seed(state.profiles_seed)?.jwt,
 		});
+	}, [rest_endpoint, JSON.stringify(state.profiles_seed)]);
+	var calc_file_url = useMemo(() => {
+		return (file_id: number) =>
+			utils_calc_file_url(state.profiles_seed, rest_endpoint, file_id);
 	}, [rest_endpoint, JSON.stringify(state.profiles_seed)]);
 	var transactions = useMemo(
 		() => user_discoverable_transactions(state.profiles, state.all_transactions),
@@ -103,6 +111,7 @@ export function FreeFlowReact({
 		request_new_thing,
 		ws_endpoint,
 		rest_endpoint,
+		calc_file_url,
 	};
 	var websocket = useRef<ReturnType<typeof io>>();
 	useLayoutEffect(() => {
@@ -134,6 +143,17 @@ export function FreeFlowReact({
 			but if you see this we were wrong.`;
 		}
 		sync_profiles_seed(websocket.current, state.profiles_seed);
+	}, [JSON.stringify(state.profiles_seed)]);
+	useEffect(() => {
+		//localStorage load at first
+		if (window.localStorage.getItem("profiles_seed") === null) {
+			window.localStorage.setItem("profiles_seed", JSON.stringify([]));
+		}
+		var profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed") as string);
+		set_state((prev) => ({ ...prev, profiles_seed }));
+	}, []);
+	useEffect(() => {
+		localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
 	}, [JSON.stringify(state.profiles_seed)]);
 	return (
 		<context.Provider value={context_value}>
