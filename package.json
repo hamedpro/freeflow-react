@@ -3,6 +3,7 @@
     "name": "freeflow-react",
     "dependencies": {
         "@types/react": "^18.2.21",
+        "@types/validator": "^13.11.1",
         "axios": "^1.5.0",
         "freeflow-core": "github:hamedpro/freeflow-core",
         "hamedpro-helpers": "^1.2.0",
@@ -10,7 +11,8 @@
         "react": "^18.2.0",
         "react-router-dom": "^6.15.0",
         "recursive-diff": "^1.0.9",
-        "socket.io-client": "^4.7.2"
+        "socket.io-client": "^4.7.2",
+        "validator": "^13.11.0"
     },
     "main": "./dist/index.js"
 }
