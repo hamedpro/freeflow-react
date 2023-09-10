@@ -9,7 +9,14 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { cache, profile, profile_seed, transaction } from "freeflow-core/dist/UnifiedHandler_types";
+import {
+	cache,
+	core_thing,
+	profile,
+	profile_seed,
+	thing_privileges,
+	transaction,
+} from "freeflow-core/dist/UnifiedHandler_types";
 import {
 	calc_cache,
 	calc_unresolved_cache,
@@ -18,9 +25,10 @@ import {
 	sync_cache,
 	sync_profiles_seed,
 	user_discoverable_transactions,
-	request_new_transaction,
-	request_new_thing,
+	request_new_transaction as utils_request_new_transaction,
+	request_new_thing as utils_request_new_thing,
 	calc_file_url as utils_calc_file_url,
+	find_active_profile,
 } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -39,8 +47,22 @@ export type context_value = state_value & {
 	cache: cache;
 	unresolved_cache: cache;
 	set_state: Dispatch<SetStateAction<state_value>>;
-	request_new_transaction: typeof request_new_transaction;
-	request_new_thing: typeof request_new_thing;
+	request_new_transaction: ({
+		new_thing_creator,
+		diff,
+		thing_id,
+	}: {
+		new_thing_creator?: (current_thing: any) => any;
+		diff?: rdiff.rdiffResult[];
+		thing_id: number;
+	}) => ReturnType<typeof utils_request_new_transaction>;
+	request_new_thing: ({
+		thing,
+		thing_privileges,
+	}: {
+		thing: core_thing;
+		thing_privileges?: thing_privileges;
+	}) => ReturnType<typeof utils_request_new_thing>;
 	ws_endpoint: string;
 	rest_endpoint: string;
 	calc_file_url: (file_id: number) => string;
@@ -107,8 +129,38 @@ export function FreeFlowReact({
 		cache,
 		transactions,
 		set_state,
-		request_new_transaction,
-		request_new_thing,
+		request_new_transaction: ({
+			new_thing_creator,
+			diff,
+			thing_id,
+		}: {
+			new_thing_creator?: (current_thing: any) => any;
+			diff?: rdiff.rdiffResult[];
+			thing_id: number;
+		}) =>
+			utils_request_new_transaction({
+				new_thing_creator,
+				diff,
+				thing_id,
+				unresolved_cache,
+				restful_api_endpoint: rest_endpoint,
+				jwt: find_active_profile_seed(state.profiles_seed)?.jwt,
+			}),
+		request_new_thing: ({
+			thing,
+			thing_privileges,
+		}: {
+			thing: core_thing;
+			thing_privileges?: thing_privileges;
+		}) => {
+			return utils_request_new_thing({
+				unresolved_cache,
+				value: thing,
+				restful_api_endpoint: rest_endpoint,
+				current_profile: find_active_profile(state.profiles),
+				thing_privileges,
+			});
+		},
 		ws_endpoint,
 		rest_endpoint,
 		calc_file_url,
@@ -144,7 +196,7 @@ export function FreeFlowReact({
 		}
 		sync_profiles_seed(websocket.current, state.profiles_seed);
 	}, [JSON.stringify(state.profiles_seed)]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		//localStorage load at first
 		if (window.localStorage.getItem("profiles_seed") === null) {
 			window.localStorage.setItem("profiles_seed", JSON.stringify([]));

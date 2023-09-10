@@ -1,6 +1,6 @@
 import { Dispatch, ReactNode, SetStateAction } from "react";
-import { cache, profile, profile_seed, transaction } from "freeflow-core/dist/UnifiedHandler_types";
-import { create_configured_axios, request_new_transaction, request_new_thing } from "freeflow-core/dist/utils";
+import { cache, core_thing, profile, profile_seed, thing_privileges, transaction } from "freeflow-core/dist/UnifiedHandler_types";
+import { create_configured_axios, request_new_transaction as utils_request_new_transaction, request_new_thing as utils_request_new_thing } from "freeflow-core/dist/utils";
 export type state_value = {
     all_transactions: transaction[];
     profiles_seed: profile_seed[];
@@ -12,8 +12,15 @@ export type context_value = state_value & {
     cache: cache;
     unresolved_cache: cache;
     set_state: Dispatch<SetStateAction<state_value>>;
-    request_new_transaction: typeof request_new_transaction;
-    request_new_thing: typeof request_new_thing;
+    request_new_transaction: ({ new_thing_creator, diff, thing_id, }: {
+        new_thing_creator?: (current_thing: any) => any;
+        diff?: rdiff.rdiffResult[];
+        thing_id: number;
+    }) => ReturnType<typeof utils_request_new_transaction>;
+    request_new_thing: ({ thing, thing_privileges, }: {
+        thing: core_thing;
+        thing_privileges?: thing_privileges;
+    }) => ReturnType<typeof utils_request_new_thing>;
     ws_endpoint: string;
     rest_endpoint: string;
     calc_file_url: (file_id: number) => string;
