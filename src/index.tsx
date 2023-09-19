@@ -179,6 +179,7 @@ export function FreeFlowReact({
 			});
 		});
 		websocket.current.on("sync_all_transactions", (new_transactions: transaction[]) => {
+			//console.log(new_transactions.length);
 			set_state((prev) => ({
 				...prev,
 				all_transactions: custom_find_unique(
@@ -199,7 +200,10 @@ export function FreeFlowReact({
 	useLayoutEffect(() => {
 		//localStorage load at first
 		if (window.localStorage.getItem("profiles_seed") === null) {
-			window.localStorage.setItem("profiles_seed", JSON.stringify([]));
+			window.localStorage.setItem(
+				"profiles_seed",
+				JSON.stringify([{ user_id: 0, is_active: true }])
+			);
 		}
 		var profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed") as string);
 		set_state((prev) => ({ ...prev, profiles_seed }));

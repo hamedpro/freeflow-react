@@ -85,6 +85,7 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
             });
         });
         websocket.current.on("sync_all_transactions", (new_transactions) => {
+            //console.log(new_transactions.length);
             set_state((prev) => (Object.assign(Object.assign({}, prev), { all_transactions: custom_find_unique(prev.all_transactions.concat(new_transactions), (tr1, tr2) => tr1.id === tr2.id) })));
         });
         sync_cache(websocket.current, state.all_transactions);
@@ -99,7 +100,7 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
     useLayoutEffect(() => {
         //localStorage load at first
         if (window.localStorage.getItem("profiles_seed") === null) {
-            window.localStorage.setItem("profiles_seed", JSON.stringify([]));
+            window.localStorage.setItem("profiles_seed", JSON.stringify([{ user_id: 0, is_active: true }]));
         }
         var profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed"));
         set_state((prev) => (Object.assign(Object.assign({}, prev), { profiles_seed })));
