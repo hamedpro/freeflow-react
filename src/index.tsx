@@ -205,8 +205,19 @@ export function FreeFlowReact({
 				JSON.stringify([{ user_id: 0, is_active: true }])
 			);
 		}
-		var profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed") as string);
-		set_state((prev) => ({ ...prev, profiles_seed }));
+
+		var saved_profiles_seed = JSON.parse(
+			window.localStorage.getItem("profiles_seed") as string
+		);
+
+		set_state((prev) => ({ ...prev, profiles_seed: saved_profiles_seed }));
+		set_state((prev) => {
+			var clone: state_value = JSON.parse(JSON.stringify(prev));
+			if (clone.profiles_seed.some((ps) => ps.is_active === true) === false) {
+				clone.profiles_seed.push({ user_id: 0, is_active: true });
+			}
+			return clone;
+		});
 	}, []);
 	useEffect(() => {
 		localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
