@@ -5,6 +5,11 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import { applyDiff } from "recursive-diff";
 import { custom_find_unique } from "hamedpro-helpers";
+var saved_profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed") || "[]");
+if (saved_profiles_seed.every((ps) => ps.is_active === false)) {
+    saved_profiles_seed === saved_profiles_seed.filter((ps) => ps.user_id !== 0);
+    saved_profiles_seed.push({ user_id: 0, is_active: true });
+}
 var default_context_value = {
     configured_axios: axios.create(),
     transactions: [],
@@ -12,7 +17,7 @@ var default_context_value = {
     unresolved_cache: [],
     all_transactions: [],
     profiles: [],
-    profiles_seed: [],
+    profiles_seed: saved_profiles_seed,
     set_state: () => {
         throw "context value is still its default value. valid set_state is not set here yet.";
     },
@@ -91,29 +96,12 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
         sync_cache(websocket.current, state.all_transactions);
     }, []);
     useEffect(() => {
+        localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
         if (websocket.current === undefined) {
             throw `internal error! we were sure websocket_client is not undefined,
 			but if you see this we were wrong.`;
         }
         sync_profiles_seed(websocket.current, state.profiles_seed);
-    }, [JSON.stringify(state.profiles_seed)]);
-    useLayoutEffect(() => {
-        //localStorage load at first
-        if (window.localStorage.getItem("profiles_seed") === null) {
-            window.localStorage.setItem("profiles_seed", JSON.stringify([{ user_id: 0, is_active: true }]));
-        }
-        var saved_profiles_seed = JSON.parse(window.localStorage.getItem("profiles_seed"));
-        set_state((prev) => (Object.assign(Object.assign({}, prev), { profiles_seed: saved_profiles_seed })));
-        set_state((prev) => {
-            var clone = JSON.parse(JSON.stringify(prev));
-            if (clone.profiles_seed.some((ps) => ps.is_active === true) === false) {
-                clone.profiles_seed.push({ user_id: 0, is_active: true });
-            }
-            return clone;
-        });
-    }, []);
-    useEffect(() => {
-        localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
     }, [JSON.stringify(state.profiles_seed)]);
     return (_jsx(context.Provider, { value: context_value, children: children }));
 }

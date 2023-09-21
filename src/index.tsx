@@ -67,6 +67,13 @@ export type context_value = state_value & {
 	rest_endpoint: string;
 	calc_file_url: (file_id: number) => string;
 };
+var saved_profiles_seed: profile_seed[] = JSON.parse(
+	window.localStorage.getItem("profiles_seed") || "[]"
+);
+if (saved_profiles_seed.every((ps) => ps.is_active === false)) {
+	saved_profiles_seed === saved_profiles_seed.filter((ps) => ps.user_id !== 0);
+	saved_profiles_seed.push({ user_id: 0, is_active: true });
+}
 var default_context_value: context_value = {
 	configured_axios: axios.create(),
 	transactions: [],
@@ -74,7 +81,7 @@ var default_context_value: context_value = {
 	unresolved_cache: [],
 	all_transactions: [],
 	profiles: [],
-	profiles_seed: [],
+	profiles_seed: saved_profiles_seed,
 	set_state: () => {
 		throw "context value is still its default value. valid set_state is not set here yet.";
 	},
@@ -191,39 +198,12 @@ export function FreeFlowReact({
 		sync_cache(websocket.current, state.all_transactions);
 	}, []);
 	useEffect(() => {
+		localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
 		if (websocket.current === undefined) {
 			throw `internal error! we were sure websocket_client is not undefined,
 			but if you see this we were wrong.`;
 		}
 		sync_profiles_seed(websocket.current, state.profiles_seed);
-	}, [JSON.stringify(state.profiles_seed)]);
-	useLayoutEffect(() => {
-		//localStorage load at first
-		if (window.localStorage.getItem("profiles_seed") === null) {
-			window.localStorage.setItem(
-				"profiles_seed",
-				JSON.stringify([{ user_id: 0, is_active: true }])
-			);
-		}
-
-		var saved_profiles_seed = JSON.parse(
-			window.localStorage.getItem("profiles_seed") as string
-		);
-
-		set_state((prev) => ({ ...prev, profiles_seed: saved_profiles_seed }));
-	}, []);
-	useEffect(() => {
-		set_state((prev) => {
-			var clone: state_value = JSON.parse(JSON.stringify(prev));
-			if (clone.profiles_seed.every((ps) => ps.is_active === false)) {
-				clone.profiles_seed === clone.profiles_seed.filter((ps) => ps.user_id !== 0);
-				clone.profiles_seed.push({ user_id: 0, is_active: true });
-			}
-			return clone;
-		});
-	}, [JSON.stringify(state.profiles_seed)]);
-	useEffect(() => {
-		localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
 	}, [JSON.stringify(state.profiles_seed)]);
 	return (
 		<context.Provider value={context_value}>
