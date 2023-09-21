@@ -212,7 +212,7 @@ export function FreeFlowReact({
 
 		set_state((prev) => ({ ...prev, profiles_seed: saved_profiles_seed }));
 	}, []);
-	useLayoutEffect(() => {
+	useEffect(() => {
 		set_state((prev) => {
 			var clone: state_value = JSON.parse(JSON.stringify(prev));
 			if (clone.profiles_seed.every((ps) => ps.is_active === false)) {
