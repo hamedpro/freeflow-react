@@ -211,14 +211,17 @@ export function FreeFlowReact({
 		);
 
 		set_state((prev) => ({ ...prev, profiles_seed: saved_profiles_seed }));
+	}, []);
+	useLayoutEffect(() => {
 		set_state((prev) => {
 			var clone: state_value = JSON.parse(JSON.stringify(prev));
-			if (clone.profiles_seed.some((ps) => ps.is_active === true) === false) {
+			if (clone.profiles_seed.every((ps) => ps.is_active === false)) {
+				clone.profiles_seed === clone.profiles_seed.filter((ps) => ps.user_id !== 0);
 				clone.profiles_seed.push({ user_id: 0, is_active: true });
 			}
 			return clone;
 		});
-	}, []);
+	}, [JSON.stringify(state.profiles_seed)]);
 	useEffect(() => {
 		localStorage.setItem("profiles_seed", JSON.stringify(state.profiles_seed));
 	}, [JSON.stringify(state.profiles_seed)]);
