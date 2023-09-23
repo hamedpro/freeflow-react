@@ -17,6 +17,8 @@ import {
 	thing_privileges,
 	transaction,
 } from "freeflow-core/dist/UnifiedHandler_types";
+import JsFileDownloader from "js-file-downloader";
+
 import {
 	calc_cache,
 	calc_unresolved_cache,
@@ -66,6 +68,7 @@ export type context_value = state_value & {
 	ws_endpoint: string;
 	rest_endpoint: string;
 	calc_file_url: (file_id: number) => string;
+	download_a_file: (file_id: number) => void;
 };
 var saved_profiles_seed: profile_seed[] = JSON.parse(
 	window.localStorage.getItem("profiles_seed") || "[]"
@@ -89,12 +92,15 @@ var default_context_value: context_value = {
 		throw "context value is still its default value. valid request_new_transaction is not set here yet.";
 	},
 	request_new_thing: () => {
-		throw "context value is still its default value. valid request_new_transaction is not set here yet.";
+		throw "context value is still its default value. valid request_new_thing is not set here yet.";
 	},
 	ws_endpoint: "http://localhost:5002",
 	rest_endpoint: "http://localhost:5001",
 	calc_file_url: (file_id: number) => {
 		throw "this function has not initialized yet";
+	},
+	download_a_file: (file_id: number) => {
+		throw "context value is still its default value. valid request_new_thing is not set here yet.";
 	},
 };
 export const context = createContext<context_value>(default_context_value);
@@ -115,6 +121,7 @@ export function FreeFlowReact({
 			jwt: find_active_profile_seed(state.profiles_seed)?.jwt,
 		});
 	}, [rest_endpoint, JSON.stringify(state.profiles_seed)]);
+
 	var calc_file_url = useMemo(() => {
 		return (file_id: number) =>
 			utils_calc_file_url(state.profiles_seed, rest_endpoint, file_id);
@@ -126,6 +133,23 @@ export function FreeFlowReact({
 	var cache = useMemo(() => {
 		return calc_cache(transactions, undefined);
 	}, [JSON.stringify(transactions)]);
+	var download_a_file = useMemo(
+		() => (file_id: number) => {
+			var originalFilename = cache.find(
+				(ci) => ci.thing.type === "meta" && ci.thing.value.file_id === file_id
+			)?.thing.value.originalFilename;
+			var jwt = find_active_profile_seed(state.profiles_seed)?.jwt;
+			new JsFileDownloader({
+				url: new URL(`/files/${file_id}`, rest_endpoint).href,
+				headers: jwt ? [{ name: "jwt", value: jwt }] : [],
+				method: "GET",
+				contentType: "application/json",
+				filename: originalFilename,
+			});
+		},
+		[JSON.stringify(state.profiles_seed), JSON.stringify(cache)]
+	);
+
 	var unresolved_cache = useMemo(() => {
 		return calc_unresolved_cache(transactions, undefined);
 	}, [JSON.stringify(transactions)]);
@@ -168,6 +192,7 @@ export function FreeFlowReact({
 				thing_privileges,
 			});
 		},
+		download_a_file,
 		ws_endpoint,
 		rest_endpoint,
 		calc_file_url,

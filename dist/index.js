@@ -1,5 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState, } from "react";
+import JsFileDownloader from "js-file-downloader";
 import { calc_cache, calc_unresolved_cache, create_configured_axios, find_active_profile_seed, sync_cache, sync_profiles_seed, user_discoverable_transactions, request_new_transaction as utils_request_new_transaction, request_new_thing as utils_request_new_thing, calc_file_url as utils_calc_file_url, find_active_profile, } from "freeflow-core/dist/utils";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -25,12 +26,15 @@ var default_context_value = {
         throw "context value is still its default value. valid request_new_transaction is not set here yet.";
     },
     request_new_thing: () => {
-        throw "context value is still its default value. valid request_new_transaction is not set here yet.";
+        throw "context value is still its default value. valid request_new_thing is not set here yet.";
     },
     ws_endpoint: "http://localhost:5002",
     rest_endpoint: "http://localhost:5001",
     calc_file_url: (file_id) => {
         throw "this function has not initialized yet";
+    },
+    download_a_file: (file_id) => {
+        throw "context value is still its default value. valid request_new_thing is not set here yet.";
     },
 };
 export const context = createContext(default_context_value);
@@ -51,6 +55,18 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
     var cache = useMemo(() => {
         return calc_cache(transactions, undefined);
     }, [JSON.stringify(transactions)]);
+    var download_a_file = useMemo(() => (file_id) => {
+        var _a, _b;
+        var originalFilename = (_a = cache.find((ci) => ci.thing.type === "meta" && ci.thing.value.file_id === file_id)) === null || _a === void 0 ? void 0 : _a.thing.value.originalFilename;
+        var jwt = (_b = find_active_profile_seed(state.profiles_seed)) === null || _b === void 0 ? void 0 : _b.jwt;
+        new JsFileDownloader({
+            url: new URL(`/files/${file_id}`, rest_endpoint).href,
+            headers: jwt ? [{ name: "jwt", value: jwt }] : [],
+            method: "GET",
+            contentType: "application/json",
+            filename: originalFilename,
+        });
+    }, [JSON.stringify(state.profiles_seed), JSON.stringify(cache)]);
     var unresolved_cache = useMemo(() => {
         return calc_unresolved_cache(transactions, undefined);
     }, [JSON.stringify(transactions)]);
@@ -76,7 +92,8 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
                 current_profile: find_active_profile(state.profiles),
                 thing_privileges,
             });
-        }, ws_endpoint,
+        }, download_a_file,
+        ws_endpoint,
         rest_endpoint,
         calc_file_url });
     var websocket = useRef();

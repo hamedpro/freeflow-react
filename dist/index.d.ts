@@ -24,6 +24,7 @@ export type context_value = state_value & {
     ws_endpoint: string;
     rest_endpoint: string;
     calc_file_url: (file_id: number) => string;
+    download_a_file: (file_id: number) => void;
 };
 export declare const context: import("react").Context<context_value>;
 export declare function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }: {
