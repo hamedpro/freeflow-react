@@ -69,6 +69,7 @@ export type context_value = state_value & {
 	rest_endpoint: string;
 	calc_file_url: (file_id: number) => string;
 	download_a_file: (file_id: number) => void;
+	download_tar_archive: (file_ids: number[], filename: string) => void;
 };
 var saved_profiles_seed: profile_seed[] = JSON.parse(
 	window.localStorage.getItem("profiles_seed") || "[]"
@@ -100,7 +101,10 @@ var default_context_value: context_value = {
 		throw "this function has not initialized yet";
 	},
 	download_a_file: (file_id: number) => {
-		throw "context value is still its default value. valid request_new_thing is not set here yet.";
+		throw "context value is still its default value. valid version of this function is not set here yet.";
+	},
+	download_tar_archive: (file_ids: number[], filename: string) => {
+		throw "context value is still its default value. valid version of this function is not set here yet.";
 	},
 };
 export const context = createContext<context_value>(default_context_value);
@@ -149,6 +153,20 @@ export function FreeFlowReact({
 		},
 		[JSON.stringify(state.profiles_seed), JSON.stringify(cache)]
 	);
+	var download_tar_archive = useMemo(
+		() => (file_ids: number[], filename: string) => {
+			var jwt = find_active_profile_seed(state.profiles_seed)?.jwt;
+			new JsFileDownloader({
+				url: new URL(`/export_files?file_ids=${JSON.stringify(file_ids)}`, rest_endpoint)
+					.href,
+				headers: jwt ? [{ name: "jwt", value: jwt }] : [],
+				method: "GET",
+				contentType: "application/json",
+				filename,
+			});
+		},
+		[JSON.stringify(state.profiles_seed)]
+	);
 
 	var unresolved_cache = useMemo(() => {
 		return calc_unresolved_cache(transactions, undefined);
@@ -196,6 +214,7 @@ export function FreeFlowReact({
 		ws_endpoint,
 		rest_endpoint,
 		calc_file_url,
+		download_tar_archive,
 	};
 	var websocket = useRef<ReturnType<typeof io>>();
 	useLayoutEffect(() => {

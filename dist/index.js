@@ -34,7 +34,10 @@ var default_context_value = {
         throw "this function has not initialized yet";
     },
     download_a_file: (file_id) => {
-        throw "context value is still its default value. valid request_new_thing is not set here yet.";
+        throw "context value is still its default value. valid version of this function is not set here yet.";
+    },
+    download_tar_archive: (file_ids, filename) => {
+        throw "context value is still its default value. valid version of this function is not set here yet.";
     },
 };
 export const context = createContext(default_context_value);
@@ -67,6 +70,18 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
             filename: originalFilename,
         });
     }, [JSON.stringify(state.profiles_seed), JSON.stringify(cache)]);
+    var download_tar_archive = useMemo(() => (file_ids, filename) => {
+        var _a;
+        var jwt = (_a = find_active_profile_seed(state.profiles_seed)) === null || _a === void 0 ? void 0 : _a.jwt;
+        new JsFileDownloader({
+            url: new URL(`/export_files?file_ids=${JSON.stringify(file_ids)}`, rest_endpoint)
+                .href,
+            headers: jwt ? [{ name: "jwt", value: jwt }] : [],
+            method: "GET",
+            contentType: "application/json",
+            filename,
+        });
+    }, [JSON.stringify(state.profiles_seed)]);
     var unresolved_cache = useMemo(() => {
         return calc_unresolved_cache(transactions, undefined);
     }, [JSON.stringify(transactions)]);
@@ -95,7 +110,8 @@ export function FreeFlowReact({ children, ws_endpoint, rest_endpoint, }) {
         }, download_a_file,
         ws_endpoint,
         rest_endpoint,
-        calc_file_url });
+        calc_file_url,
+        download_tar_archive });
     var websocket = useRef();
     useLayoutEffect(() => {
         websocket.current = io(ws_endpoint);
